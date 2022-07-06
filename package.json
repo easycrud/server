@@ -1,0 +1,24 @@
+{
+  "name": "@curdman/koa-router-crud",
+  "version": "1.0.0",
+  "description": "A koa middleware for constructing CRUD router simply based on koa-router.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/easycrud/koa-router-crud.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/easycrud/koa-router-crud/issues"
+  },
+  "homepage": "https://github.com/easycrud/koa-router-crud#readme",
+  "devDependencies": {
+    "eslint": "^8.18.0",
+    "eslint-config-google": "^0.14.0"
+  }
+}

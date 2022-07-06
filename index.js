@@ -4,18 +4,20 @@ const {Parser} = require('@easycrud/toolkits');
 const Router = require('koa-router');
 const db = require('./db');
 
-module.exports = async function(opts, router) {
-  opts = opts || {};
-  const {path, dbConfigs} = opts;
+module.exports = async function(
+  {
+    path, tables, dbConfigs,
+  }, router) {
   if (!dbConfigs) {
     throw new Error('Set at least one database connection config please.');
   }
-
-  let {tables} = opts;
   if (path) {
     const parser = new Parser();
     parser.parse(path);
     tables = parser.tables;
+  }
+  if (!tables || tables.length === 0) {
+    throw new Error('table config is required.');
   }
 
   const dbConns = dbConfigs.map((conf) => db.connect(conf, conf.database));

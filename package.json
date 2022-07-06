@@ -18,7 +18,16 @@
   },
   "homepage": "https://github.com/easycrud/koa-router-crud#readme",
   "devDependencies": {
+    "@types/knex": "^0.16.1",
+    "@types/koa": "^2.13.4",
+    "@types/koa-router": "^7.4.4",
     "eslint": "^8.18.0",
-    "eslint-config-google": "^0.14.0"
+    "eslint-config-google": "^0.14.0",
+    "koa": "^2.13.4"
+  },
+  "dependencies": {
+    "knex": "^2.1.0",
+    "knex-paginate": "^3.0.1",
+    "koa-router": "^11.0.1"
   }
 }

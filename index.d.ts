@@ -2,10 +2,14 @@ import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
 
-type columnFormatter = (col: string) => string;
-type Operate = 'read' | 'create' | 'update' | 'delete';
+type AuthOperate = 'read' | 'create' | 'update' | 'delete';
+type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
 
-declare namespace crud {
+interface routerConfig {
+  middleware: Router.IMiddleware<StateT, CustomT> | Array<Router.IMiddleware<StateT, CustomT>>;
+}
+
+declare namespace Crud {
   interface DBConfig extends Knex.Config {
     database?: string;
   }
@@ -17,11 +21,21 @@ declare namespace crud {
 
     tables: Toolkits.TableDefinition;
 
-    dbConfigs: DBConfig[];
+    dbConfig: DBConfig | DBConfig[];
+
+    routerConfig?: {
+      [tableName: string]: {
+        [method: ResourceOperate]: routerConfig;
+      };
+    };
   }
 }
 
-declare function crud(opts: crud.Options, router?: Router): Router.IMiddleware;
+declare class Crud {
+  constructor(opts: crud.Options, router?: Router);
+
+  build(): Router.IMiddleware;
+};
 
 declare module "@easycrud/toolkits" {
   interface TableOptions {
@@ -36,9 +50,9 @@ declare module "@easycrud/toolkits" {
       /**
        * Operations that require authorization.
        */
-      operates?: Operate[];
+      operates?: AuthOperate[];
     }
   }
 }
 
-export = crud;
+export = Crud;

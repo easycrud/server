@@ -1,5 +1,5 @@
 class Dao {
-  constructor({db, table, alias}) {
+  constructor({db, table, alias, pk}) {
     this.db = db;
     this.table = table;
     this.alias = alias;
@@ -51,7 +51,57 @@ class Dao {
     }
   }
 
-  async getById(id) {
+  async getByPk(pk) {
+    try {
+      const result = await this.db
+        .where(this.transform(pk))
+        .select(this.alias)
+        .from(this.table);
+
+      return result.length > 0 ? result[0] : null;
+    } catch (err) {
+      console.log(err);
+      return {err};
+    }
+  }
+
+  async delByPk(pk) {
+    try {
+      const result = await this.db
+        .where(this.transform(pk))
+        .from(this.table)
+        .del();
+
+      return result;
+    } catch (err) {
+      console.log(err);
+      return {err};
+    }
+  }
+
+  async create(data) {
+    try {
+      const result = await this.db.insert(this.transform(data)).into(this.table);
+
+      return result;
+    } catch (err) {
+      console.log(err);
+      return {err};
+    }
+  }
+
+  async updateByPk(pk, data) {
+    try {
+      const result = await this.db
+        .where(this.transform(pk))
+        .from(this.table)
+        .update(this.transform(data));
+
+      return result;
+    } catch (err) {
+      console.log(err);
+      return {err};
+    }
   }
 }
 

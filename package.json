@@ -28,6 +28,7 @@
   "dependencies": {
     "knex": "^2.1.0",
     "knex-paginate": "^3.0.1",
-    "koa-router": "^11.0.1"
+    "koa-router": "^11.0.1",
+    "varname": "^3.0.1"
   }
 }

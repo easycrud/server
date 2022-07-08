@@ -62,6 +62,23 @@ class Crud {
     return primaryKey;
   }
 
+  response(ctx, res) {
+    if (res.err) {
+      ctx.response.status = !err.code || err.code > 500 ? 500 : err.code;
+      ctx.body = {
+        code: err.code || 500,
+        msg: err.message || 'unknown error',
+        data: null,
+      };
+    } else {
+      ctx.body = {
+        code: 0,
+        msg: 'success',
+        data,
+      };
+    }
+  }
+
   async buildOperates(table, dao) {
     const rowAuthOpts = table?.options?.rowAuth;
     if (rowAuthOpts && !(this.getUserAuth && typeof this.getUserAuth === 'function')) {
@@ -73,7 +90,7 @@ class Crud {
       {[authCol]: authValue} : {};
     const addPermit = (res, authValue) => ({...res, permit: res[authCol].includes(authValue)});
 
-    const pk = this.getPrimaryKey(table);
+    const pk = this.getPrimaryKey(table).map((col) => this.getColumnAlias(col));
     const pkQuery = (ctx) => pk.length === 1 ? {[pk[0]]: ctx.params[pk[0]]} : ctx.query;
 
     return {
@@ -83,7 +100,7 @@ class Crud {
           const authValue = await this.getUserAuth(ctx);
           let res = await dao.all(Object.assign(authQuery('read', authValue), ctx.query));
           res = addPermit(res, authValue);
-          ctx.body = res;
+          this.response(ctx, res);
         },
       },
       paginate: {
@@ -92,7 +109,7 @@ class Crud {
           const authValue = await this.getUserAuth(ctx);
           let res = await dao.paginate(Object.assign(authQuery('read', authValue), ctx.query));
           res = addPermit(res, authValue);
-          ctx.body = res;
+          this.response(ctx, res);
         },
       },
       show: {
@@ -100,21 +117,22 @@ class Crud {
         handler: async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           const res = await dao.getByPk(pkQuery(ctx), authQuery('read', authValue));
-          ctx.body = res;
+          this.response(ctx, res);
         },
       },
       store: {
         method: 'post',
         handler: async (ctx) => {
           const res = await dao.create(ctx.request.body.data);
-          ctx.body = res;
+          this.response(ctx, res);
         },
       },
       edit: {
+        method: 'put',
         handler: async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           const res = await dao.updateByPk(pkQuery(ctx), authQuery('read', authValue), ctx.request.body.data);
-          ctx.body = res;
+          this.response(ctx, res);
         },
       },
       destory: {
@@ -122,7 +140,7 @@ class Crud {
         handler: async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           const res = await dao.delByPk(pkQuery(ctx), authQuery('read', authValue));
-          ctx.body = res;
+          this.response(ctx, res);
         },
       },
     };
@@ -166,7 +184,7 @@ class Crud {
         const handler = routerConfig?.handler || operate.handler;
         let path = model;
         if (/(show|edit|destory)/.test(key)) {
-          path += pk.length === 1 ? `/:${pk[0]}` : `/row`;
+          path += pk.length === 1 ? `/:${this.getColumnAlias(pk[0])}` : `/row`;
         }
         this.router.register(path, [operate.method], [...middleware, handler]);
       });

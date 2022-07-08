@@ -65,7 +65,7 @@ class Dao {
         .select(this.alias)
         .from(this.table);
 
-      return result.length > 0 ? result[0] : null;
+      return result.length > 0 ? result[0] : {err: 'not found'};
     } catch (err) {
       console.log(err);
       return {err};

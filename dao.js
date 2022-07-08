@@ -40,10 +40,17 @@ class Dao {
     }
   }
 
-  async paginate(perPage, currentPage, params) {
+  async paginate(params) {
     try {
+      const {page, pageSize, orderBy} = params;
+      const currentPage = page ? parseInt(page, 10) : 1;
+      const perPage = pageSize ? parseInt(pageSize, 10) : 20;
       let query = this.db.select(this.alias);
       query = this.buildCond(query, this.transform(params));
+      if (orderBy) {
+        const [key, order] = orderBy.split(',');
+        query = query.orderBy(key, order || 'DESC');
+      }
       return await query.from(this.table).paginate({perPage, currentPage, isLengthAware: true});
     } catch (err) {
       console.error(err);
@@ -51,10 +58,10 @@ class Dao {
     }
   }
 
-  async getByPk(pk) {
+  async getByPk(pk, auth) {
     try {
       const result = await this.db
-        .where(this.transform(pk))
+        .where(this.transform({...pk, ...auth}))
         .select(this.alias)
         .from(this.table);
 
@@ -65,10 +72,10 @@ class Dao {
     }
   }
 
-  async delByPk(pk) {
+  async delByPk(pk, auth) {
     try {
       const result = await this.db
-        .where(this.transform(pk))
+        .where(this.transform({...pk, ...auth}))
         .from(this.table)
         .del();
 
@@ -90,10 +97,10 @@ class Dao {
     }
   }
 
-  async updateByPk(pk, data) {
+  async updateByPk(pk, auth, data) {
     try {
       const result = await this.db
-        .where(this.transform(pk))
+        .where(this.transform({...pk, ...auth}))
         .from(this.table)
         .update(this.transform(data));
 

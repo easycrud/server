@@ -1,5 +1,5 @@
 {
-  "name": "@curdman/koa-router-crud",
+  "name": "@easycrud/koa-router-crud",
   "version": "1.0.0",
   "description": "A koa middleware for constructing CRUD router simply based on koa-router.",
   "main": "index.js",
@@ -23,7 +23,8 @@
     "@types/koa-router": "^7.4.4",
     "eslint": "^8.18.0",
     "eslint-config-google": "^0.14.0",
-    "koa": "^2.13.4"
+    "koa": "^2.13.4",
+    "mysql": "^2.18.1"
   },
   "dependencies": {
     "deepmerge": "^4.2.2",

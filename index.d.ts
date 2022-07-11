@@ -1,12 +1,13 @@
 import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
+import * as Koa from 'koa';
 import { ParsedUrlQuery } from 'querystring';
 
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
 type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
 
-class Dao {
+declare class Dao {
   constructor(opts: {
     db: Knex.Client;
     table: string;
@@ -15,17 +16,17 @@ class Dao {
 
   all(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
   paginate(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
-  getByPk(pk, auth: Record<string, string>): Promise<any | { err?: string }>;
-  delByPk(pk, auth: Record<string, string>): Promise<any | { err?: string }>;
+  getByPk(pk: Record<string, string>, auth: Record<string, string>): Promise<any | { err?: string }>;
+  delByPk(pk: Record<string, string>, auth: Record<string, string>): Promise<any | { err?: string }>;
   create(data: Record<string, string>): Promise<any | { err?: string }>;
-  updateByPk(pk, data, auth: Record<string, string>): Promise<any | { err?: string }>;
+  updateByPk(pk: Record<string, string>, data: Record<string, string>, auth: Record<string, string>): Promise<any | { err?: string }>;
 }
 
 interface routerConfig {
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
   path: string;
-  middleware: Router.IMiddleware<StateT, CustomT> | Array<Router.IMiddleware<StateT, CustomT>>;
-  handler: (dao: Dao) => Router.IMiddleware<StateT, CustomT>;
+  middleware: Router.IMiddleware | Array<Router.IMiddleware>;
+  handler: (dao: Dao) => Router.IMiddleware;
 }
 
 declare namespace Crud {
@@ -35,9 +36,9 @@ declare namespace Crud {
 
   interface Options {
 
-    path: string;
+    path?: string;
 
-    tables: Toolkits.TableDefinition;
+    tables?: Toolkits.TableDefinition;
 
     dbConfig: DBConfig | DBConfig[];
 
@@ -49,6 +50,12 @@ declare namespace Crud {
          */ 
         primaryKey: string | string[];
 
+        /**
+         * If true, the default router opreates will be overwritten by the property 'operates'.
+         * Otherwise, the property 'operates' will be deeply merged with the default router opreates.
+         */
+        overwrite: boolean;
+
         opreates: Record<ResourceOperate | string, Partial<routerConfig>>;
       }>;
     };
@@ -58,15 +65,15 @@ declare namespace Crud {
      * Then it will be compared with the value of the column set in the rowAuth option in the table definition.
      * If the value is matched, the user can operate the row.
      */
-    getUserAuth: (context: Router.RouterContext) => any;
+    getUserAuth?: (context: Router.RouterContext) => any;
   }
 }
 
 declare class Crud {
-  constructor(opts: crud.Options, router?: Router);
+  constructor(opts: Crud.Options, router?: Router);
 
-  build(): Router.IMiddleware;
-};
+  build(): Promise<Router.IMiddleware>;
+}
 
 declare module "@easycrud/toolkits" {
   interface TableOptions {

@@ -29,7 +29,7 @@ class Crud {
     return dbClient;
   }
 
-  getColumnAlias(col) {
+  getColumnAlias(table, col) {
     const formatterMp = {
       'snake': varname.underscore,
       'camel': varname.camelback,
@@ -46,7 +46,7 @@ class Crud {
 
   getTableAlias(table) {
     return Object.fromEntries(table.columns.map((col) => {
-      const alias = col.alias || this.getColumnAlias(col.name);
+      const alias = col.alias || this.getColumnAlias(table, col.name);
       return [alias, col.name];
     }));
   }
@@ -56,7 +56,7 @@ class Crud {
       return index.primary;
     });
     if (primaryKey.length > 0) {
-      return primaryKey[0].column;
+      return primaryKey[0].columns;
     }
     const routerConfig = this.routerConfig[table.alias] || this.routerConfig[table.tableName];
     primaryKey = [].concat(routerConfig?.[key]?.primaryKey || []);
@@ -86,12 +86,12 @@ class Crud {
       throw new Error(`table ${table.tableName} requires row auth check, but getUserAuth function is not defined.`);
     }
 
-    const authCol = this.getColumnAlias(rowAuthOpts.column);
+    const authCol = this.getColumnAlias(table, rowAuthOpts.column);
     const authQuery = (op, authValue) => rowAuthOpts.operates.includes(op) ?
       {[authCol]: authValue} : {};
     const addPermit = (res, authValue) => ({...res, permit: res[authCol].includes(authValue)});
 
-    const pk = this.getPrimaryKey(table).map((col) => this.getColumnAlias(col));
+    const pk = this.getPrimaryKey(table).map((col) => this.getColumnAlias(table, col));
     const pkQuery = (ctx) => pk.length === 1 ? {[pk[0]]: ctx.params[pk[0]]} : ctx.query;
 
     return {
@@ -153,7 +153,7 @@ class Crud {
     }
     if (this.path) {
       const parser = new Parser();
-      await parser.parse(path);
+      await parser.parse(this.path);
       this.tables = parser.tables;
     }
     if (!this.tables || this.tables.length === 0) {
@@ -166,7 +166,7 @@ class Crud {
       await db.connect(this.dbConfig, this.dbConfig.database);
     }
 
-    tables.forEach((t) => {
+    this.tables.forEach((t) => {
       const model = t.alias || t.tableName;
       const pk = this.getPrimaryKey(t);
       if (pk.length === 0) {
@@ -178,17 +178,19 @@ class Crud {
         alias: this.getTableAlias(t),
       });
 
-      const operates = this.buildOperates(t);
-      const customOperates = (this.routerConfig[model] || this.routerConfig[t.tableName])?.operates;
-      const mergedOperates = merge(operates, customOperates);
-      Object.entries(mergedOperates).forEach(([key, operate]) => {
+      const defaultOperates = this.buildOperates(t);
+      const routerConfig = this.routerConfig[model] || this.routerConfig[t.tableName];
+      const overwriteOperates = routerConfig?.overwrite;
+      const customOperates = routerConfig?.operates || {};
+      const operates = overwriteOperates ? customOperates : merge(defaultOperates, customOperates);
+      Object.entries(operates).forEach(([key, operate]) => {
         const middleware = [].concat(operate.middleware || []);
         const handler = operate.handler || ((ctx) => ctx.body = `The router handler is not defined.`);
         let path = operate.path;
         if (!path) {
           path = model;
           if (/(show|edit|destory)/.test(key)) {
-            path += pk.length === 1 ? `/:${this.getColumnAlias(pk[0])}` : `/row`;
+            path += pk.length === 1 ? `/:${this.getColumnAlias(t, pk[0])}` : `/row`;
           }
         }
         this.router.register(path, [operate.method || 'get'], [...middleware, handler(dao)]);

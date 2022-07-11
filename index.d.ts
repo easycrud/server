@@ -1,20 +1,37 @@
 import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
+import { ParsedUrlQuery } from 'querystring';
 
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
 type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
 
+class Dao {
+  constructor(opts: {
+    db: Knex.Client;
+    table: string;
+    alias: Record<string, string>;
+  })
+
+  all(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
+  paginate(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
+  getByPk(pk, auth: Record<string, string>): Promise<any | { err?: string }>;
+  delByPk(pk, auth: Record<string, string>): Promise<any | { err?: string }>;
+  create(data: Record<string, string>): Promise<any | { err?: string }>;
+  updateByPk(pk, data, auth: Record<string, string>): Promise<any | { err?: string }>;
+}
+
 interface routerConfig {
+  method: 'get' | 'post' | 'put' | 'delete' | 'patch';
+  path: string;
   middleware: Router.IMiddleware<StateT, CustomT> | Array<Router.IMiddleware<StateT, CustomT>>;
-  handler: Router.IMiddleware<StateT, CustomT>;
+  handler: (dao: Dao) => Router.IMiddleware<StateT, CustomT>;
 }
 
 declare namespace Crud {
   interface DBConfig extends Knex.Config {
     database?: string;
   }
-
 
   interface Options {
 
@@ -25,15 +42,15 @@ declare namespace Crud {
     dbConfig: DBConfig | DBConfig[];
 
     routerConfig?: {
-      [tableName: string]: {
+      [tableName: string]: Partial<{
         /**
          * If the table does not have a primary key, 
          * set it manually for the show, edit, destory operates which need row search conditions.
          */ 
         primaryKey: string | string[];
 
-        [method: ResourceOperate]: routerConfig;
-      };
+        opreates: Record<ResourceOperate | string, Partial<routerConfig>>;
+      }>;
     };
 
     /**

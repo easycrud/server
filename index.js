@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const db = require('./db');
 const Dao = require('./dao');
 const varname = require('varname');
+const merge = require('deepmerge');
 
 class Crud {
   constructor({
@@ -79,7 +80,7 @@ class Crud {
     }
   }
 
-  async buildOperates(table, dao) {
+  async buildOperates(table) {
     const rowAuthOpts = table?.options?.rowAuth;
     if (rowAuthOpts && !(this.getUserAuth && typeof this.getUserAuth === 'function')) {
       throw new Error(`table ${table.tableName} requires row auth check, but getUserAuth function is not defined.`);
@@ -96,7 +97,7 @@ class Crud {
     return {
       all: {
         method: 'get',
-        handler: async (ctx) => {
+        handler: (dao) => async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           let res = await dao.all(Object.assign(authQuery('read', authValue), ctx.query));
           res = addPermit(res, authValue);
@@ -105,7 +106,7 @@ class Crud {
       },
       paginate: {
         method: 'get',
-        handler: async (ctx) => {
+        handler: (dao) => async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           let res = await dao.paginate(Object.assign(authQuery('read', authValue), ctx.query));
           res = addPermit(res, authValue);
@@ -114,7 +115,7 @@ class Crud {
       },
       show: {
         method: 'get',
-        handler: async (ctx) => {
+        handler: (dao) => async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           const res = await dao.getByPk(pkQuery(ctx), authQuery('read', authValue));
           this.response(ctx, res);
@@ -122,14 +123,14 @@ class Crud {
       },
       store: {
         method: 'post',
-        handler: async (ctx) => {
+        handler: (dao) => async (ctx) => {
           const res = await dao.create(ctx.request.body.data);
           this.response(ctx, res);
         },
       },
       edit: {
         method: 'put',
-        handler: async (ctx) => {
+        handler: (dao) => async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           const res = await dao.updateByPk(pkQuery(ctx), authQuery('read', authValue), ctx.request.body.data);
           this.response(ctx, res);
@@ -137,7 +138,7 @@ class Crud {
       },
       destory: {
         method: 'delete',
-        handler: async (ctx) => {
+        handler: (dao) => async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
           const res = await dao.delByPk(pkQuery(ctx), authQuery('read', authValue));
           this.response(ctx, res);
@@ -177,16 +178,20 @@ class Crud {
         alias: this.getTableAlias(t),
       });
 
-      const operates = this.buildOperates(t, dao);
-      Object.entries(operates).forEach(([key, operate]) => {
-        const routerConfig = (this.routerConfig[model] || this.routerConfig[t.tableName])?.[key];
-        const middleware = [].concat(routerConfig?.middleware || []);
-        const handler = routerConfig?.handler || operate.handler;
-        let path = model;
-        if (/(show|edit|destory)/.test(key)) {
-          path += pk.length === 1 ? `/:${this.getColumnAlias(pk[0])}` : `/row`;
+      const operates = this.buildOperates(t);
+      const customOperates = (this.routerConfig[model] || this.routerConfig[t.tableName])?.operates;
+      const mergedOperates = merge(operates, customOperates);
+      Object.entries(mergedOperates).forEach(([key, operate]) => {
+        const middleware = [].concat(operate.middleware || []);
+        const handler = operate.handler || ((ctx) => ctx.body = `The router handler is not defined.`);
+        let path = operate.path;
+        if (!path) {
+          path = model;
+          if (/(show|edit|destory)/.test(key)) {
+            path += pk.length === 1 ? `/:${this.getColumnAlias(pk[0])}` : `/row`;
+          }
         }
-        this.router.register(path, [operate.method], [...middleware, handler]);
+        this.router.register(path, [operate.method || 'get'], [...middleware, handler(dao)]);
       });
     });
 

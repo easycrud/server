@@ -37,7 +37,7 @@ declare namespace Crud {
 
     path?: string;
 
-    tables?: Toolkits.TableDefinition;
+    tables?: Toolkits.TableDefinition[];
 
     dbConfig: DBConfig | DBConfig[];
 

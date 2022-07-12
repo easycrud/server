@@ -2,7 +2,7 @@
 
 > A [koa-router](https://github.com/koajs/router) extension for constructing CRUD router simply.
     
-![](https://img.shields.io/node/v/koa-router-crud)  
+![](https://img.shields.io/node/v/@easycrud/koa-router-crud)  
 
 ## Installation
 ```bash

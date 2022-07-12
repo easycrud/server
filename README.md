@@ -1,6 +1,6 @@
 # @easycrud/koa-router-crud
 
-    A [koa-router](https://github.com/koajs/router) extension for constructing CRUD router simply.
+> A [koa-router](https://github.com/koajs/router) extension for constructing CRUD router simply.
     
 ![](https://img.shields.io/node/v/koa-router-crud)  
 

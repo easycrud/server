@@ -11,11 +11,11 @@ class Crud {
   constructor({
     path, tables, dbConfig, routerConfig, getUserAuth,
   }, router) {
-    this.path = path;
-    this.tables = tables;
-    this.dbConfig = dbConfig;
-    this.routerConfig = routerConfig;
-    this.getUserAuth = getUserAuth;
+    this.path = path || '';
+    this.tables = tables || [];
+    this.dbConfig = dbConfig || {};
+    this.routerConfig = routerConfig || {};
+    this.getUserAuth = getUserAuth || ((ctx) => {});
     this.router = router || new Router();
   }
 
@@ -30,6 +30,9 @@ class Crud {
   }
 
   getColumnAlias(table, col) {
+    if (!col) {
+      return col;
+    }
     const formatterMp = {
       'snake': varname.underscore,
       'camel': varname.camelback,
@@ -63,8 +66,9 @@ class Crud {
     return primaryKey;
   }
 
-  response(ctx, res) {
-    if (res.err) {
+  response(ctx, data) {
+    if (data.err) {
+      const err = data.err;
       ctx.response.status = !err.code || err.code > 500 ? 500 : err.code;
       ctx.body = {
         code: err.code || 500,
@@ -80,22 +84,22 @@ class Crud {
     }
   }
 
-  async buildOperates(table) {
+  buildOperates(table) {
     const rowAuthOpts = table?.options?.rowAuth;
     if (rowAuthOpts && !(this.getUserAuth && typeof this.getUserAuth === 'function')) {
       throw new Error(`table ${table.tableName} requires row auth check, but getUserAuth function is not defined.`);
     }
-
-    const authCol = this.getColumnAlias(table, rowAuthOpts.column);
-    const authQuery = (op, authValue) => rowAuthOpts.operates.includes(op) ?
+    const authCol = this.getColumnAlias(table, rowAuthOpts?.column);
+    const authQuery = (op, authValue) => authCol && rowAuthOpts?.operates.includes(op) ?
       {[authCol]: authValue} : {};
-    const addPermit = (res, authValue) => ({...res, permit: res[authCol].includes(authValue)});
+    const addPermit = authCol ? (res, authValue) => ({...res, permit: res[authCol].includes(authValue)}) : (res) => res;
 
     const pk = this.getPrimaryKey(table).map((col) => this.getColumnAlias(table, col));
     const pkQuery = (ctx) => pk.length === 1 ? {[pk[0]]: ctx.params[pk[0]]} : ctx.query;
 
     return {
       all: {
+        path: `all_${table.alias || table.tableName}`,
         method: 'get',
         handler: (dao) => async (ctx) => {
           const authValue = await this.getUserAuth(ctx);
@@ -197,7 +201,7 @@ class Crud {
       });
     });
 
-    return this.router.routes();
+    return this.router;
   }
 }
 

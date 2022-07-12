@@ -1,7 +1,6 @@
 import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
-import * as Koa from 'koa';
 import { ParsedUrlQuery } from 'querystring';
 
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
@@ -66,13 +65,16 @@ declare namespace Crud {
      * If the value is matched, the user can operate the row.
      */
     getUserAuth?: (context: Router.RouterContext) => any;
+
+    router?: Router;
   }
 }
 
+interface Crud extends Crud.Options {}
 declare class Crud {
   constructor(opts: Crud.Options, router?: Router);
 
-  build(): Promise<Router.IMiddleware>;
+  build(): Promise<Router>;
 }
 
 declare module "@easycrud/toolkits" {

@@ -10,6 +10,7 @@ class Dao {
       if (key in this.alias) {
         result[this.alias[key]] = val;
       }
+      return result;
     }, {});
   }
 

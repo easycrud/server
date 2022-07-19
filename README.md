@@ -4,10 +4,29 @@
     
 ![](https://img.shields.io/node/v/@easycrud/koa-router-crud)  
 
+## Table of Contents
+- [Installation](#installation)
+- [Feature](#feature)
+- [Quick Start](#quick-start)
+- [Main Dependencies](#main-dependencies)
+- [API Reference](#api-reference)
+- [Row Authorization](#row-authorization)
+
 ## Installation
 ```bash
 npm install koa-router-crud
 ```
+
+## Feature
+Transform the table definition schema into RESTful style CRUD routers of koa.  
+Basic example: the [`user.json`](https://github.com/easycrud/example/blob/main/schemas/user.json) will be transformed into the following routers:
+
+- `GET /all_users[?username=xxx]` get all users without pagination.
+- `GET /users?page=1&pageSize=10[&username=xxx]` get users with pagination.
+- `GET /users/:id` get a user by id.
+- `POST /users` create a user.
+- `PUT /users/:id` update a user by id.
+- `DELETE /users/:id` delete a user by id.
 
 ## Quick Start
 ```typescript
@@ -41,20 +60,64 @@ crud.build().then((router) => {
 });
 ```
 
+## Main Dependencies
+
+- [koa](https://koajs.com/) - The application building framework.
+- [koa-router](https://github.com/koajs/router) - The router construction base.
+- [@easycrud/toolkits](https://github.com/easycrud/toolkits) - Provide a Parser to output standard table model objects.
+- [knex.js](http://knexjs.org/) - An SQL query builder to help operate databases. 
+
 ## API Reference
 
-### Table of Contents
-
 - [Crud](#crud)
-    - [new Crud(\[opts\])](#new-crudopts)
+    - [new Crud(\[opts\], `Router`)](#new-crudopts)
     - [crud.build](#crudbuild) => `Promise<Router>`
 
 ## Crud
 
 **Kind**: Exported class
 
-### new Crud(\[opts\])
+### new Crud(\[opts\], `Router`)
 
-Create a new Crud instance.
+Create a new Crud instance. If `Router` is not provided, a new `Router` instance will be created.
+
+#### Options
+
+- `path (String)` - directory or file path that pass to the [Parser](https://github.com/easycrud/toolkits/blob/master/lib/parser.js). The parsed table models will be stored in `crud.tables`.
+- `tables (Array)` - table models defined using standard table definition. If `path` is provided, `tables` will be ignored.
+- `dbConfig (Object|Array)` - [knex configiguration options](http://knexjs.org/guide/#configuration-options) that will be used for establishing database connections before the application start.    
+*If more than one `dbConfig` is provided, the value of `dbConfig.database` and `[table].options.database` must be guaranteed equal.
+- `routerConfig (Object)` - A configuration object with table name as key to [customize the generated routers](#customize-routers).
+
+#### Customize routers
+
+**Set primary key**
+
+If the table does not have a primary key, it can be set manually.
+
+```js
+const routerConfig = {
+  // customize the router for the table `user`
+  'user': {
+    'primaryKey': 'id',
+  }
+}
+```
+
+Additionally, a composite primary key can be set as
+
+```js
+const routerConfig = {
+  // customize the router for the table `user`
+  'user': {
+    'primaryKey': ['username', 'email'],
+  }
+}
+```
+
+And the `GET /users/:pk` router will be changed to `GET /users/row?username=:username&email=:email`.
+  
 
 ### crud.build => `Promise<Router>`
+
+## Row Authorization

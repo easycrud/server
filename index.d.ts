@@ -65,8 +65,6 @@ declare namespace Crud {
      * If the value is matched, the user can operate the row.
      */
     getUserAuth?: (context: Router.RouterContext) => any;
-
-    router?: Router;
   }
 }
 

@@ -116,7 +116,72 @@ const routerConfig = {
 ```
 
 And the `GET /users/:pk` router will be changed to `GET /users/row?username=:username&email=:email`.
-  
+
+**Custom router**
+
+The default corresponding handler methods to the routers are:  
+
+- `GET /all_[tablename]` - `all`
+- `GET /[tablename]` - `paginate`
+- `GET /tablename/:id` - `show`
+- `POST /tablename` - `store`
+- `PUT /tablename/:id` - `edit`
+- `DELETE /tablename/:id` - `destory`
+
+Change the default router like this:
+
+```js
+const routerConfig = {
+  // customize the router for the table `user`
+  'user': {
+    'operates': {
+      // Change the default router, 'all|paginate|show|store|edit|destory'
+      'all': {
+        // set the http method, 'get|post|put|delete|patch'
+        'method': 'get',
+        // change the default path
+        'path': '',
+        // add some middlewares before the handler
+        'middlewares': [],
+        // change the default handler
+        'handler': (dao) => {
+            // The parameter `dao` is a `Dao` instance. It provide some help functions to operate the database.
+            return async (ctx, next) => {
+                // do something
+            }
+        }
+      },
+      // Add a new router
+      'auth': {
+        'method': 'get',
+        'path': 'auth',
+        'middlewares': [],
+        'handler': (dao) => {
+            return async (ctx, next) => {
+                // do something
+            }
+        }
+      }
+    }
+  }
+}
+```
+
+**Overwrite router**
+
+If the `overwrite` property is set to `true`, only the router defined in `operates` remain and the default router will be removed.
+
+```js
+const routerConfig = {
+  // customize the router for the table `user`
+  'user': {
+    'overwrite': true,
+    'operates': {
+      // ...
+    }
+  }
+}
+```
 
 ### crud.build => `Promise<Router>`
 

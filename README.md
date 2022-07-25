@@ -70,8 +70,8 @@ crud.build().then((router) => {
 ## API Reference
 
 - [Crud](#crud)
-    - [new Crud(\[opts\], `Router`)](#new-crudopts)
-    - [crud.build](#crudbuild) => `Promise<Router>`
+    - [new Crud(\[opts\], `Router`)](#new-crudopts-router)
+    - [crud.build => `Promise<Router>`](#crudbuild-promiserouter)
 
 ## Crud
 
@@ -85,7 +85,7 @@ Create a new Crud instance. If `Router` is not provided, a new `Router` instance
 
 - `path (String)` - directory or file path that pass to the [Parser](https://github.com/easycrud/toolkits/blob/master/lib/parser.js). The parsed table models will be stored in `crud.tables`.
 - `tables (Array)` - table models defined using standard table definition. If `path` is provided, `tables` will be ignored.
-- `dbConfig (Object|Array)` - [knex configiguration options](http://knexjs.org/guide/#configuration-options) that will be used for establishing database connections before the application start.    
+- `dbConfig (Object|Array)` - [knex configuration options](http://knexjs.org/guide/#configuration-options) that will be used for establishing database connections before the application start.    
 *If more than one `dbConfig` is provided, the value of `dbConfig.database` and `[table].options.database` must be guaranteed equal.
 - `routerConfig (Object)` - A configuration object with table name as key to [customize the generated routers](#customize-routers).
 
@@ -183,6 +183,6 @@ const routerConfig = {
 }
 ```
 
-### crud.build => `Promise<Router>`
+<h3 id="crudbuild-promiserouter">crud.build => <code>Promise&lt;Router&gt;</code></h3>
 
 ## Row Authorization

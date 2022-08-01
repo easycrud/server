@@ -28,6 +28,10 @@ Basic example: the [`user.json`](https://github.com/easycrud/example/blob/main/s
 - `PUT /users/:id` update a user by id.
 - `DELETE /users/:id` delete a user by id.
 
+The first two routers can be appended query parameters to filter the result.
+- fuzzy search: `column=value`
+- range search: `column=value1,value2` (column>=value1 and column<=value2)
+
 ## Quick Start
 ```typescript
 import * as Koa from 'koa';
@@ -71,7 +75,16 @@ crud.build().then((router) => {
 
 - [Crud](#crud)
     - [new Crud(\[opts\], `Router`)](#new-crudopts-router)
-    - [crud.build => `Promise<Router>`](#crudbuild-promiserouter)
+    - instance
+        - [.build => `Promise<Router>`](#crudbuild-promiserouter)
+- [Dao](#dao)
+    - instance
+        - [.all(params) => `Array|{err}`](#allparams-array-err)
+        - [.paginate(params) => `Array|{err}`](#paginateparams-array-err)
+        - [.getByPk(pk, auth) => `Object|{err}`](#getbypkpk-object-err)
+        - [.delByPk(pk, auth) => `Object|{err}`](#delbypkpk-object-err)
+        - [.create(data) => `Object|{err}`](#create-object-err)
+        - [.updateByPk(pk, data, auth) => `Object|{err}`](#updatebypkpk-object-err)
 
 ## Crud
 
@@ -185,4 +198,56 @@ const routerConfig = {
 
 <h3 id="crudbuild-promiserouter">crud.build => <code>Promise&lt;Router&gt;</code></h3>
 
+Construct database connections and build the api routers, returning a `Router` instance.
+
+```js
+crud.build().then((router) => {
+  // Register the router and start the application
+  // after the databases are connected and the routers are built.
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+
+  app.listen(3000);
+});
+```
+
+## Dao
+
+<h3 id="allparams-array-err">dao.all(params) => <code>Array|{err}</code></h3>
+
+Get all records from the table.
+
+- params: the query object get from `ctx.query` used for filtering data.
+
+<h3 id="paginateparams-array-err">dao.paginate(params) => <code>Array|{err}</code></h3>
+
+Get paginated records from the table.
+
+<h3 id="getbypkpk-object-err">dao.getByPk(pk, auth) => <code>Object|{err}</code></h3>
+
+Get a record by primary key.
+
+- pk: the primary key-value pair. `{pkCol: pkVal}`
+- auth: the value of row authorization column. `{authCol: authVal}`
+
+<h3 id="delbypkpk-object-err">dao.delByPk(pk, auth) => <code>Object|{err}</code></h3>
+
+Delete a record by primary key.
+
+<h3 id="create-object-err">dao.create(data) => <code>Object|{err}</code></h3>
+
+Create a new record.
+
+- data: the data to be created get from `ctx.request.body.data`.
+
+<h3 id="updatebypkpk-object-err">dao.updateByPk(pk, data, auth) => <code>Object|{err}</code></h3>
+
+Update a record by primary key.
+
+- pk: the primary key-value pair. `{pkCol: pkVal}`
+- data: the data to be updated get from `ctx.request.body.data`.
+- auth: the value of row authorization column. `{authCol: authVal}`
+
 ## Row Authorization
+
+Waiting for test...

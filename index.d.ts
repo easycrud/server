@@ -6,28 +6,6 @@ import { ParsedUrlQuery } from 'querystring';
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
 type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
 
-declare class Dao {
-  constructor(opts: {
-    db: Knex.Client;
-    table: string;
-    alias: Record<string, string>;
-  })
-
-  all(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
-  paginate(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
-  getByPk(pk: Record<string, string>, auth: Record<string, string>): Promise<any | { err?: string }>;
-  delByPk(pk: Record<string, string>, auth: Record<string, string>): Promise<any | { err?: string }>;
-  create(data: Record<string, string>): Promise<any | { err?: string }>;
-  updateByPk(pk: Record<string, string>, data: Record<string, string>, auth: Record<string, string>): Promise<any | { err?: string }>;
-}
-
-interface routerConfig {
-  method: 'get' | 'post' | 'put' | 'delete' | 'patch';
-  path: string;
-  middleware: Router.IMiddleware | Array<Router.IMiddleware>;
-  handler: (dao: Dao) => Router.IMiddleware;
-}
-
 declare namespace Crud {
   interface DBConfig extends Knex.Config {
     database?: string;
@@ -65,6 +43,30 @@ declare namespace Crud {
      * If the value is matched, the user can operate the row.
      */
     getUserAuth?: (context: Router.RouterContext) => any;
+
+    router?: Router;
+  }
+
+  interface routerConfig {
+    method: 'get' | 'post' | 'put' | 'delete' | 'patch';
+    path: string;
+    middleware: Router.IMiddleware | Array<Router.IMiddleware>;
+    handler: (dao: Dao) => Router.IMiddleware;
+  }
+
+  class Dao {
+    constructor(opts: {
+      db: Knex.Client;
+      table: string;
+      alias: Record<string, string>;
+    })
+  
+    all(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
+    paginate(query: ParsedUrlQuery): Promise<any[] | { err?: string }>;
+    getByPk(pk: Record<string, string>, auth?: Record<string, string>): Promise<any | { err?: string }>;
+    delByPk(pk: Record<string, string>, auth?: Record<string, string>): Promise<any | { err?: string }>;
+    create(data: Record<string, string>): Promise<any | { err?: string }>;
+    updateByPk(pk: Record<string, string>, data: Record<string, string>, auth?: Record<string, string>): Promise<any | { err?: string }>;
   }
 }
 

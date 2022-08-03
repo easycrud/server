@@ -2,6 +2,7 @@ import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
 import { ParsedUrlQuery } from 'querystring';
+import * as Koa from 'koa';
 
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
 type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
@@ -92,6 +93,12 @@ declare module "@easycrud/toolkits" {
        */
       operates?: AuthOperate[];
     }
+  }
+}
+
+declare module "koa" {
+  interface BaseContext {
+    reply: (data?: object | Array<any> | string) => void;
   }
 }
 

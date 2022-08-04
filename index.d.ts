@@ -2,7 +2,6 @@ import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
 import { ParsedUrlQuery } from 'querystring';
-import * as Koa from 'koa';
 
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
 type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
@@ -43,7 +42,7 @@ declare namespace Crud {
      * Then it will be compared with the value of the column set in the rowAuth option in the table definition.
      * If the value is matched, the user can operate the row.
      */
-    getUserAuth?: (context: Router.RouterContext) => any;
+    getUserAuth?: (context: Router.RouterContext) => string;
 
     router?: Router;
   }

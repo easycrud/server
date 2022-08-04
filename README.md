@@ -10,7 +10,8 @@
 - [Quick Start](#quick-start)
 - [Main Dependencies](#main-dependencies)
 - [API Reference](#api-reference)
-- [Row Authorization](#row-authorization)
+    - [Customize Routers](#customize-routers)
+    - [Row-Level Authorization](#row-level-authorization)
 
 ## Installation
 ```bash
@@ -85,6 +86,7 @@ crud.build().then((router) => {
         - [.delByPk(pk, auth) => `Object|{err}`](#delbypkpk-object-err)
         - [.create(data) => `Object|{err}`](#create-object-err)
         - [.updateByPk(pk, data, auth) => `Object|{err}`](#updatebypkpk-object-err)
+- [ctx.reply(data)](#ctxreplydata)
 
 ## Crud
 
@@ -101,6 +103,7 @@ Create a new Crud instance. If `Router` is not provided, a new `Router` instance
 - `dbConfig (Object|Array)` - [knex configuration options](http://knexjs.org/guide/#configuration-options) that will be used for establishing database connections before the application start.    
 *If more than one `dbConfig` is provided, the value of `dbConfig.database` and `[table].options.database` must be guaranteed equal.
 - `routerConfig (Object)` - A configuration object with table name as key to [customize the generated routers](#customize-routers).
+- `getUserAuth (Function)` - `(context: Router.RouterContext) => string` A function to get the authorization value related to current user and the value is used for verifying [row-level authorization](#row-level-authorization). 
 
 #### Customize routers
 
@@ -211,6 +214,31 @@ crud.build().then((router) => {
 });
 ```
 
+
+#### Row-Level Authorization
+
+```js
+const getUserAuth = (ctx) => {
+  // Get the authorization value related to current user
+  return ctx.state.user.id;
+}
+```
+
+Set `rowAuth` options of the table definition schema.
+
+```json
+{
+    //...
+    "options": {
+        "rowAuth": {
+            "column": "user_id",
+            // Operations that require authorization.
+            "operates": ["read", "create", "update", "delete"]
+        }
+    }
+}
+```
+
 ## Dao
 
 <h3 id="allparams-array-err">dao.all(params) => <code>Array|{err}</code></h3>
@@ -248,6 +276,20 @@ Update a record by primary key.
 - data: the data to be updated get from `ctx.request.body.data`.
 - auth: the value of row authorization column. `{authCol: authVal}`
 
-## Row Authorization
+## ctx.reply(data)
 
-Waiting for test...
+```js
+ctx.reply({ id: 1 });
+ctx.reply({ err: { code: 404, msg: 'not found' } });
+```
+
+Return the standard data.
+
+```json
+{
+    "code": 0,
+    "msg": "success",
+    "data": {}
+}
+```
+

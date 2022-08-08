@@ -181,10 +181,18 @@ class Crud {
       if (pk.length === 0) {
         throw new Error(`primary key of table model ${model} is required.`);
       }
+
+      const dbClient = this.getDbClient(t);
       const dao = new Dao({
-        db: this.getDbClient(t),
+        db: dbClient,
         table: t.tableName,
         alias: this.getTableAlias(t),
+      });
+
+      this.router.use(async (ctx, next) => {
+        ctx[`${model}DB`] = dbClient;
+        ctx[`${model}Dao`] = dao;
+        await next();
       });
 
       const defaultOperates = this.buildOperates(t);

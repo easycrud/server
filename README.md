@@ -280,7 +280,7 @@ Update a record by primary key.
 
 ```js
 ctx.reply({ id: 1 });
-ctx.reply({ err: { code: 404, msg: 'not found' } });
+ctx.reply({ err: { code: 404, message: 'not found' } });
 ```
 
 Return the standard data.

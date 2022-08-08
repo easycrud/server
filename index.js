@@ -66,24 +66,22 @@ class Crud {
     return primaryKey;
   }
 
-  response(ctx) {
-    return (data) => {
-      if (data.err) {
-        const err = data.err;
-        ctx.response.status = !err.code || err.code > 500 ? 500 : err.code;
-        ctx.body = {
-          code: err.code || 500,
-          msg: err.message || 'unknown error',
-          data: null,
-        };
-      } else {
-        ctx.body = {
-          code: 0,
-          msg: 'success',
-          data,
-        };
-      }
-    };
+  response(ctx, data) {
+    if (data.err) {
+      const err = data.err;
+      ctx.response.status = !err.code || err.code > 500 ? 500 : err.code;
+      ctx.body = {
+        code: err.code || 500,
+        msg: err.message || 'unknown error',
+        data: null,
+      };
+    } else {
+      ctx.body = {
+        code: 0,
+        msg: 'success',
+        data,
+      };
+    }
   }
 
   buildOperates(table) {
@@ -173,7 +171,7 @@ class Crud {
     }
 
     this.router.use(async (ctx, next) => {
-      ctx.reply = (ctx) => this.response(ctx);
+      ctx.reply = (data) => this.response(ctx, data);
       await next();
     });
 

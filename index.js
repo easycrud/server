@@ -6,10 +6,11 @@ const db = require('./db');
 const Dao = require('./dao');
 const varname = require('varname');
 const merge = require('deepmerge');
+const koaBody = require('koa-body');
 
 class Crud {
   constructor({
-    path, tables, dbConfig, routerConfig, getUserAuth,
+    path, tables, dbConfig, routerConfig, getUserAuth, koaBodyOptions,
   }, router) {
     this.path = path || '';
     this.tables = tables || [];
@@ -17,6 +18,12 @@ class Crud {
     this.routerConfig = routerConfig || {};
     this.getUserAuth = getUserAuth || ((ctx) => {});
     this.router = router || new Router();
+
+    this.router.use(koaBody(koaBodyOptions || {}));
+    this.router.use(async (ctx, next) => {
+      ctx.reply = (data) => this.response(ctx, data);
+      await next();
+    });
   }
 
   getDbClient(table) {
@@ -151,7 +158,7 @@ class Crud {
     };
   }
 
-  async build() {
+  async build(app) {
     if (!this.dbConfig) {
       throw new Error('Set at least one database connection config please.');
     }
@@ -170,11 +177,6 @@ class Crud {
       await db.connect(this.dbConfig, this.dbConfig.database);
     }
 
-    this.router.use(async (ctx, next) => {
-      ctx.reply = (data) => this.response(ctx, data);
-      await next();
-    });
-
     this.tables.forEach((t) => {
       const model = t.alias || t.tableName;
       const pk = this.getPrimaryKey(t);
@@ -189,11 +191,8 @@ class Crud {
         alias: this.getTableAlias(t),
       });
 
-      this.router.use(async (ctx, next) => {
-        ctx[`${model}DB`] = dbClient;
-        ctx[`${model}Dao`] = dao;
-        await next();
-      });
+      app.context[`${model}DB`] = dbClient;
+      app.context[`${model}Dao`] = dao;
 
       const defaultOperates = this.buildOperates(t);
       const routerConfig = this.routerConfig[model] || this.routerConfig[t.tableName];

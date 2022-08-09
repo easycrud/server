@@ -57,7 +57,7 @@ const crud = new Crud({
   },
 }, router);
 
-crud.build().then((router) => {
+crud.build(app).then((router) => {
   app.use(router.routes());
   app.use(router.allowedMethods());
 
@@ -69,15 +69,16 @@ crud.build().then((router) => {
 
 - [koa](https://koajs.com/) - The application building framework.
 - [koa-router](https://github.com/koajs/router) - The router construction base.
-- [@easycrud/toolkits](https://github.com/easycrud/toolkits) - Provide a Parser to output standard table model objects.
+- [koa-body](https://github.com/koajs/koa-body) - A request body parser middleware.
 - [knex.js](http://knexjs.org/) - An SQL query builder to help operate databases. 
+- [@easycrud/toolkits](https://github.com/easycrud/toolkits) - Provide a Parser to output standard table model objects.
 
 ## API Reference
 
 - [Crud](#crud)
     - [new Crud(\[opts\], `Router`)](#new-crudopts-router)
     - instance
-        - [.build => `Promise<Router>`](#crudbuild-promiserouter)
+        - [.build(app) => `Promise<Router>`](#crudbuild-promiserouter)
 - [Dao](#dao)
     - instance
         - [.all(params) => `Array|{err}`](#allparams-array-err)
@@ -104,6 +105,7 @@ Create a new Crud instance. If `Router` is not provided, a new `Router` instance
 *If more than one `dbConfig` is provided, the value of `dbConfig.database` and `[table].options.database` must be guaranteed equal.
 - `routerConfig (Object)` - A configuration object with table name as key to [customize the generated routers](#customize-routers).
 - `getUserAuth (Function)` - `(context: Router.RouterContext) => string` A function to get the authorization value related to current user and the value is used for verifying [row-level authorization](#row-level-authorization). 
+- `koaBodyOptions (Object)` - [koa-body options](https://github.com/koajs/koa-body#options) that will be passed to `koa-body` middleware.
 
 #### Customize routers
 
@@ -199,12 +201,12 @@ const routerConfig = {
 }
 ```
 
-<h3 id="crudbuild-promiserouter">crud.build => <code>Promise&lt;Router&gt;</code></h3>
+<h3 id="crudbuild-promiserouter">crud.build(app) => <code>Promise&lt;Router&gt;</code></h3>
 
 Construct database connections and build the api routers, returning a `Router` instance.
 
 ```js
-crud.build().then((router) => {
+crud.build(app).then((router) => {
   // Register the router and start the application
   // after the databases are connected and the routers are built.
   app.use(router.routes());

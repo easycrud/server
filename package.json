@@ -1,6 +1,6 @@
 {
   "name": "@easycrud/koa-router-crud",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A koa middleware for constructing CRUD router simply based on koa-router.",
   "main": "index.js",
   "scripts": {
@@ -31,6 +31,7 @@
     "deepmerge": "^4.2.2",
     "knex": "^2.1.0",
     "knex-paginate": "^3.0.1",
+    "koa-body": "^5.0.0",
     "koa-router": "^11.0.1",
     "pg": "^8.7.3",
     "varname": "^3.0.1"

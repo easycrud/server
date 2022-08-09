@@ -1,8 +1,9 @@
 import * as Toolkits from '@easycrud/toolkits';
 import { Knex } from 'knex';
 import * as Router from 'koa-router';
+import * as koaBody from 'koa-body';
 import { ParsedUrlQuery } from 'querystring';
-import 'koa';
+import * as Koa from 'koa';
 
 type AuthOperate = 'read' | 'create' | 'update' | 'delete';
 type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
@@ -45,7 +46,7 @@ declare namespace Crud {
      */
     getUserAuth?: (context: Router.RouterContext) => string;
 
-    router?: Router;
+    koaBodyOptions?: koaBody.IKoaBodyOptions;
   }
 
   interface routerConfig {
@@ -75,7 +76,7 @@ interface Crud extends Crud.Options {}
 declare class Crud {
   constructor(opts: Crud.Options, router?: Router);
 
-  build(): Promise<Router>;
+  build(app: Koa): Promise<Router>;
 }
 
 declare module "@easycrud/toolkits" {

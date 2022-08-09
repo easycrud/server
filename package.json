@@ -1,6 +1,6 @@
 {
   "name": "@easycrud/koa-router-crud",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A koa middleware for constructing CRUD router simply based on koa-router.",
   "main": "index.js",
   "scripts": {

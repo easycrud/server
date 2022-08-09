@@ -27,7 +27,7 @@
     "mysql": "^2.18.1"
   },
   "dependencies": {
-    "@easycrud/toolkits": "^0.0.2",
+    "@easycrud/toolkits": "^0.1.0",
     "deepmerge": "^4.2.2",
     "knex": "^2.1.0",
     "knex-paginate": "^3.0.1",

@@ -1,22 +1,33 @@
 'use strict';
 
-const {Parser} = require('@easycrud/toolkits');
-const Router = require('koa-router');
+import {AuthOperate, TableSchema} from '../../types';
+import {Knex} from 'knex';
+import koaBody from 'koa-body';
+import Router from 'koa-router';
+import {Options, routerConfig} from './types';
+import * as varname from 'varname';
+import Koa from 'koa';
 const db = require('./db');
 const Dao = require('./dao');
-const varname = require('varname');
-const merge = require('deepmerge');
-const koaBody = require('koa-body');
 
-class Crud {
+const merge = require('deepmerge');
+
+export default class KoaRESTful {
+  path: string;
+  tables: TableSchema[];
+  dbConfig: Knex.Config;
+  routerConfig: routerConfig | {};
+  getUserAuth?: (context: Router.RouterContext) => Record<string, any>;
+  router: Router;
+
   constructor({
     path, tables, dbConfig, routerConfig, getUserAuth, koaBodyOptions,
-  }, router) {
+  }: Options, router: Router) {
     this.path = path || '';
     this.tables = tables || [];
     this.dbConfig = dbConfig || {};
     this.routerConfig = routerConfig || {};
-    this.getUserAuth = getUserAuth || ((ctx) => {});
+    this.getUserAuth = getUserAuth;
     this.router = router || new Router();
 
     this.router.use(koaBody(koaBodyOptions || {}));
@@ -26,7 +37,7 @@ class Crud {
     });
   }
 
-  getDbClient(table) {
+  getDbClient(table: TableSchema) {
     // Get db client, if not exists, use default db client.
     const dbName = table.options?.database;
     let dbClient = Object.values(db.client)[0];
@@ -36,7 +47,7 @@ class Crud {
     return dbClient;
   }
 
-  getColumnAlias(table, col) {
+  getColumnAlias(table: TableSchema, col?: string) {
     if (!col) {
       return col;
     }
@@ -44,7 +55,7 @@ class Crud {
       'snake': varname.underscore,
       'camel': varname.camelback,
       'kebab': varname.dash,
-      'none': (col) => col,
+      'none': (col: string) => col,
     };
     const defaultFormatter = 'camel';
     let formatter = table.options?.columnFormatter || defaultFormatter;
@@ -54,26 +65,14 @@ class Crud {
     return formatter(col);
   }
 
-  getTableAlias(table) {
+  getTableAlias(table: TableSchema) {
     return Object.fromEntries(table.columns.map((col) => {
       const alias = col.alias || this.getColumnAlias(table, col.name);
       return [alias, col.name];
     }));
   }
 
-  getPrimaryKey(table) {
-    let primaryKey = Object.values(table.indexes || {}).filter((index) => {
-      return index.primary;
-    });
-    if (primaryKey.length > 0) {
-      return primaryKey[0].columns;
-    }
-    const routerConfig = this.routerConfig[table.alias] || this.routerConfig[table.tableName];
-    primaryKey = [].concat(routerConfig?.[key]?.primaryKey || []);
-    return primaryKey;
-  }
-
-  response(ctx, data) {
+  response(ctx: Koa.Context, data: Record<string, any>) {
     if (data.err) {
       const err = data.err;
       ctx.response.status = !err.code || err.code > 500 ? 500 : err.code;
@@ -91,18 +90,20 @@ class Crud {
     }
   }
 
-  buildOperates(table) {
+  buildOperates(table: TableSchema) {
     const rowAuthOpts = table?.options?.rowAuth;
     if (rowAuthOpts && !(this.getUserAuth && typeof this.getUserAuth === 'function')) {
       throw new Error(`table ${table.tableName} requires row auth check, but getUserAuth function is not defined.`);
     }
     const authCol = this.getColumnAlias(table, rowAuthOpts?.column);
-    const authQuery = (op, authValue) => authCol && rowAuthOpts?.operates.includes(op) ?
+    const authQuery = (op: AuthOperate, authValue: string) => authCol && rowAuthOpts?.operates?.includes(op) ?
       {[authCol]: authValue} : {};
-    const addPermit = authCol ? (res, authValue) => ({...res, permit: res[authCol].includes(authValue)}) : (res) => res;
+    const addPermit = authCol ?
+      (res: any, authValue: string) => ({...res, permit: res[authCol].includes(authValue)}) :
+      (res: any) => res;
 
-    const pk = this.getPrimaryKey(table).map((col) => this.getColumnAlias(table, col));
-    const pkQuery = (ctx) => pk.length === 1 ? {[pk[0]]: ctx.params[pk[0]]} : ctx.query;
+    const pk = table.pk.map((col) => this.getColumnAlias(table, col));
+    const pkQuery = (ctx: Koa.Context) => pk.length === 1 ? {[pk[0]]: ctx.params[pk[0]]} : ctx.query;
 
     return {
       all: {
@@ -216,5 +217,3 @@ class Crud {
     return this.router;
   }
 }
-
-module.exports = Crud;

@@ -12,9 +12,10 @@ export default class DB {
     this.client = {};
   }
 
-  async connect(config: Knex.Config, database: string) {
-    if (!this.client[database]) {
-      this.client[database] = await knex(config);
+  async connect(config: Knex.Config, database?: string) {
+    if (database && this.client[database]) {
+      return;
     }
+    this.client[database || 'default'] = await knex(config);
   }
 }

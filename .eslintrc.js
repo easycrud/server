@@ -22,5 +22,5 @@ module.exports = {
     'sourceType': 'module',
   },
 
-  'ignorePatterns': ['index.d.ts'],
+  'ignorePatterns': ['lib'],
 };

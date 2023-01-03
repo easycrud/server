@@ -16,5 +16,11 @@ module.exports = {
     'max-len': ['error', 120],
   },
 
-  'ignorePatterns': ['index.d.ts'],
+  'parser': '@typescript-eslint/parser',
+  'parserOptions': {
+    'ecmaVersion': 12,
+    'sourceType': 'module',
+  },
+
+  'ignorePatterns': ['lib'],
 };

@@ -1,22 +1,35 @@
 'use strict';
 
-const {Parser} = require('@easycrud/toolkits');
-const Router = require('koa-router');
-const db = require('./db');
-const Dao = require('./dao');
-const varname = require('varname');
-const merge = require('deepmerge');
-const koaBody = require('koa-body');
+import {AuthOperate, TableSchema as TypeTableSchema} from '../../types';
+import koaBody from 'koa-body';
+import Router, {RouterContext} from 'koa-router';
+import {DBConfig, operateConfig, Options, ResourceOperate, routerConfig} from './types';
+import * as varname from 'varname';
+import Koa from 'koa';
+import Dao from '../../dao';
+import Application from 'koa';
+import {TableSchema} from '@easycrud/toolkits';
+import {Knex} from 'knex';
+import merge from 'deepmerge';
+import DB from '../../db';
+const db = new DB();
 
-class Crud {
+export default class KoaRESTful {
+  path: string;
+  schemas: TypeTableSchema[];
+  dbConfig: DBConfig;
+  routerConfig: routerConfig;
+  getUserAuth: (context: RouterContext) => string;
+  router: Router;
+
   constructor({
-    path, tables, dbConfig, routerConfig, getUserAuth, koaBodyOptions,
-  }, router) {
+    path, schemas, dbConfig, routerConfig, getUserAuth, koaBodyOptions,
+  }: Options, router: Router) {
     this.path = path || '';
-    this.tables = tables || [];
+    this.schemas = schemas || [];
     this.dbConfig = dbConfig || {};
     this.routerConfig = routerConfig || {};
-    this.getUserAuth = getUserAuth || ((ctx) => {});
+    this.getUserAuth = getUserAuth || ((_ctx: RouterContext) => '');
     this.router = router || new Router();
 
     this.router.use(koaBody(koaBodyOptions || {}));
@@ -26,7 +39,7 @@ class Crud {
     });
   }
 
-  getDbClient(table) {
+  getDbClient(table: TypeTableSchema): Knex {
     // Get db client, if not exists, use default db client.
     const dbName = table.options?.database;
     let dbClient = Object.values(db.client)[0];
@@ -36,7 +49,7 @@ class Crud {
     return dbClient;
   }
 
-  getColumnAlias(table, col) {
+  getColumnAlias(table: TypeTableSchema, col: string) {
     if (!col) {
       return col;
     }
@@ -44,7 +57,7 @@ class Crud {
       'snake': varname.underscore,
       'camel': varname.camelback,
       'kebab': varname.dash,
-      'none': (col) => col,
+      'none': (col: string) => col,
     };
     const defaultFormatter = 'camel';
     let formatter = table.options?.columnFormatter || defaultFormatter;
@@ -54,26 +67,14 @@ class Crud {
     return formatter(col);
   }
 
-  getTableAlias(table) {
+  getTableAlias(table: TypeTableSchema) {
     return Object.fromEntries(table.columns.map((col) => {
       const alias = col.alias || this.getColumnAlias(table, col.name);
       return [alias, col.name];
     }));
   }
 
-  getPrimaryKey(table) {
-    let primaryKey = Object.values(table.indexes || {}).filter((index) => {
-      return index.primary;
-    });
-    if (primaryKey.length > 0) {
-      return primaryKey[0].columns;
-    }
-    const routerConfig = this.routerConfig[table.alias] || this.routerConfig[table.tableName];
-    primaryKey = [].concat(routerConfig?.[key]?.primaryKey || []);
-    return primaryKey;
-  }
-
-  response(ctx, data) {
+  response(ctx: RouterContext, data: any) {
     if (data.err) {
       const err = data.err;
       ctx.response.status = !err.code || err.code > 500 ? 500 : err.code;
@@ -91,18 +92,26 @@ class Crud {
     }
   }
 
-  buildOperates(table) {
+  buildOperates(table: TypeTableSchema): Record<ResourceOperate, Partial<operateConfig>> {
     const rowAuthOpts = table?.options?.rowAuth;
     if (rowAuthOpts && !(this.getUserAuth && typeof this.getUserAuth === 'function')) {
       throw new Error(`table ${table.tableName} requires row auth check, but getUserAuth function is not defined.`);
     }
-    const authCol = this.getColumnAlias(table, rowAuthOpts?.column);
-    const authQuery = (op, authValue) => authCol && rowAuthOpts?.operates.includes(op) ?
+    const authCol = this.getColumnAlias(table, rowAuthOpts?.column || '');
+    const authQuery = (op: AuthOperate, authValue: string) => authCol && rowAuthOpts?.operates?.includes(op) ?
       {[authCol]: authValue} : {};
-    const addPermit = authCol ? (res, authValue) => ({...res, permit: res[authCol].includes(authValue)}) : (res) => res;
+    const addPermit = authCol ?
+      (res: any, authValue: string) => ({...res, permit: res[authCol].includes(authValue)}) :
+      (res: any) => res;
 
-    const pk = this.getPrimaryKey(table).map((col) => this.getColumnAlias(table, col));
-    const pkQuery = (ctx) => pk.length === 1 ? {[pk[0]]: ctx.params[pk[0]]} : ctx.query;
+    const pk = table.pk.map((col) => this.getColumnAlias(table, col));
+    const pkQuery = (ctx: Koa.Context) => {
+      const query: Record<string, any> = {};
+      pk.forEach((col) => {
+        query[col] = ctx.params[col];
+      });
+      return query;
+    };
 
     return {
       all: {
@@ -158,16 +167,20 @@ class Crud {
     };
   }
 
-  async build(app) {
+  async build(app: Application) {
     if (!this.dbConfig) {
       throw new Error('Set at least one database connection config please.');
     }
     if (this.path) {
-      const parser = new Parser();
-      await parser.parse(this.path);
-      this.tables = parser.tables;
+      const tableSchema = new TableSchema();
+      const schemas = tableSchema.fromPath(this.path);
+      if (!Array.isArray(schemas)) {
+        this.schemas.push(schemas);
+      } else {
+        this.schemas = schemas;
+      }
     }
-    if (!this.tables || this.tables.length === 0) {
+    if (!this.schemas || this.schemas.length === 0) {
       throw new Error('table config is required.');
     }
     if (Array.isArray(this.dbConfig)) {
@@ -177,9 +190,9 @@ class Crud {
       await db.connect(this.dbConfig, this.dbConfig.database);
     }
 
-    this.tables.forEach((t) => {
+    this.schemas.forEach((t) => {
       const model = t.alias || t.tableName;
-      const pk = this.getPrimaryKey(t);
+      const pk = t.pk;
       if (pk.length === 0) {
         throw new Error(`primary key of table model ${model} is required.`);
       }
@@ -198,15 +211,17 @@ class Crud {
       const routerConfig = this.routerConfig[model] || this.routerConfig[t.tableName];
       const overwriteOperates = routerConfig?.overwrite;
       const customOperates = routerConfig?.operates || {};
-      const operates = overwriteOperates ? customOperates : merge(defaultOperates, customOperates);
+      const operates: Record<string, Partial<operateConfig>> = overwriteOperates ?
+        customOperates : merge(defaultOperates, customOperates);
       Object.entries(operates).forEach(([key, operate]) => {
-        const middleware = [].concat(operate.middleware || []);
-        const handler = operate.handler || ((ctx) => ctx.body = `The router handler is not defined.`);
+        const middleware = operate.middleware ?
+          (Array.isArray(operate.middleware) ? operate.middleware : [operate.middleware]) : [];
+        const handler = operate.handler || ((_dao) => (ctx) => ctx.body = `The router handler is not defined.`);
         let path = operate.path;
         if (!path) {
           path = model;
           if (/(show|edit|destory)/.test(key)) {
-            path += pk.length === 1 ? `/:${this.getColumnAlias(t, pk[0])}` : `/row`;
+            path += pk.map((col) => `/:${this.getColumnAlias(t, col)}`).join('');
           }
         }
         this.router.register(path, [operate.method || 'get'], [...middleware, handler(dao)]);
@@ -216,5 +231,3 @@ class Crud {
     return this.router;
   }
 }
-
-module.exports = Crud;

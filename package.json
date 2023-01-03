@@ -1,40 +1,55 @@
 {
-  "name": "@easycrud/koa-router-crud",
-  "version": "1.0.3",
+  "name": "@easycrud/server",
+  "version": "1.1.0",
   "description": "A koa middleware for constructing CRUD router simply based on koa-router.",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "files": [
+    "lib",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./lib/koa/restful": {
+      "default": "./lib/koa/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/easycrud/koa-router-crud.git"
+    "url": "git+https://github.com/easycrud/server.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/easycrud/koa-router-crud/issues"
+    "url": "https://github.com/easycrud/server/issues"
   },
-  "homepage": "https://github.com/easycrud/koa-router-crud#readme",
+  "homepage": "https://github.com/easycrud/server#readme",
   "devDependencies": {
-    "@types/knex": "^0.16.1",
+    "@types/knex": "^0.15.2",
     "@types/koa": "^2.13.4",
     "@types/koa-router": "^7.4.4",
+    "@typescript-eslint/parser": "^5.48.0",
     "eslint": "^8.18.0",
     "eslint-config-google": "^0.14.0",
     "koa": "^2.13.4",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "typescript": "^4.9.4"
   },
   "dependencies": {
-    "@easycrud/toolkits": "^0.1.0",
+    "@easycrud/toolkits": "^0.3.0",
     "deepmerge": "^4.2.2",
-    "knex": "^2.1.0",
+    "knex": "^2.3.0",
     "knex-paginate": "^3.0.1",
     "koa-body": "^5.0.0",
     "koa-router": "^11.0.1",
     "pg": "^8.7.3",
-    "varname": "^3.0.1"
+    "varname": "^4.1.2"
   },
   "engines": {
     "node": ">=14.0.0"

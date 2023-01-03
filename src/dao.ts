@@ -1,20 +1,32 @@
-class Dao {
-  constructor({db, table, alias, pk}) {
+import {Knex} from 'knex';
+
+interface Options {
+  db: Knex;
+  table: string;
+  alias: Record<string, string>;
+}
+
+export default class Dao {
+  db: Knex;
+  table: string;
+  alias: Record<string, string>;
+
+  constructor({db, table, alias}: Options) {
     this.db = db;
     this.table = table;
     this.alias = alias;
   }
 
-  transform(data) {
+  transform(data: Record<string, any>) {
     return Object.entries(data).reduce((result, [key, val]) => {
       if (key in this.alias) {
         result[this.alias[key]] = val;
       }
       return result;
-    }, {});
+    }, {} as Record<string, any>);
   }
 
-  buildCond(query, cond) {
+  buildCond(query: Knex.QueryBuilder, cond: Record<string, any>) {
     Object.entries(cond).forEach(([key, val]) => {
       if (!val) {
         return;
@@ -30,7 +42,7 @@ class Dao {
     return query;
   }
 
-  async all(params) {
+  async all(params: Record<string, any>) {
     try {
       let query = this.db.select(this.alias);
       query = this.buildCond(query, this.transform(params));
@@ -41,7 +53,7 @@ class Dao {
     }
   }
 
-  async paginate(params) {
+  async paginate(params: Record<string, any>) {
     try {
       const {page, pageSize, orderBy} = params;
       const currentPage = page ? parseInt(page, 10) : 1;
@@ -59,7 +71,7 @@ class Dao {
     }
   }
 
-  async getByPk(pk, auth) {
+  async getByPk(pk: Record<string, any>, auth: Record<string, any>) {
     try {
       const result = await this.db
         .where(this.transform({...pk, ...auth}))
@@ -73,7 +85,7 @@ class Dao {
     }
   }
 
-  async delByPk(pk, auth) {
+  async delByPk(pk: Record<string, any>, auth: Record<string, any>) {
     try {
       const result = await this.db
         .where(this.transform({...pk, ...auth}))
@@ -87,7 +99,7 @@ class Dao {
     }
   }
 
-  async create(data) {
+  async create(data: Record<string, any>) {
     try {
       const result = await this.db.insert(this.transform(data)).into(this.table);
 
@@ -98,7 +110,10 @@ class Dao {
     }
   }
 
-  async updateByPk(pk, auth, data) {
+  async updateByPk(
+    pk: Record<string, any>,
+    auth: Record<string, any>,
+    data: Record<string, any>) {
     try {
       const result = await this.db
         .where(this.transform({...pk, ...auth}))
@@ -112,5 +127,3 @@ class Dao {
     }
   }
 }
-
-module.exports = Dao;

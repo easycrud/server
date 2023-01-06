@@ -1,11 +1,8 @@
-import {TableSchema} from '@easycrud/toolkits/lib/table-schema/types';
-import {Knex} from 'knex';
-import * as Koa from 'koa';
 import koaBody from 'koa-body';
 import Router from 'koa-router';
+import {Options, ResourceOperate, RESTfulOperateConfig} from '../../base/types';
 import Dao from '../../dao';
 
-export type ResourceOperate = 'all' | 'paginate' | 'show' | 'store' | 'edit' | 'destory';
 export interface routerConfig {
   [tableName: string]: Partial<{
     /**
@@ -20,27 +17,17 @@ export interface routerConfig {
      */
     overwrite: boolean;
 
-    operates: Record<ResourceOperate | string, Partial<operateConfig>>;
+    operates: Record<ResourceOperate, Partial<OperateConfig>> | Record<string, OperateConfig>;
   }>;
 }
 
-export interface operateConfig {
-  method: 'get' | 'post' | 'put' | 'delete' | 'patch';
-  path: string;
-  middleware: Router.IMiddleware | Array<Router.IMiddleware>;
+export interface OperateConfig extends Omit<RESTfulOperateConfig, 'handler'> {
+  middleware?: Router.IMiddleware | Array<Router.IMiddleware>;
   handler: (dao: Dao) => Router.IMiddleware;
 }
 
-export interface DBConfig extends Knex.Config {
-  database?: string;
-};
-
-export interface Options {
-  path?: string;
-  schemas?: TableSchema[];
-  dbConfig?: DBConfig;
+export interface KoaOptions extends Options {
   routerConfig?: routerConfig;
-  getUserAuth?: (context: Koa.BaseContext) => string;
   koaBodyOptions?: koaBody.IKoaBodyOptions;
 }
 

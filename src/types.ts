@@ -3,24 +3,23 @@ import {
   TableSchema as BaseTableSchema,
 } from '@easycrud/toolkits/lib/table-schema/types';
 
-export type AuthOperate = 'read' | 'create' | 'update' | 'delete';
+export type TableOperate = 'read' | 'create' | 'update' | 'delete';
 export interface TableOptions extends BaseTableOptions {
   /**
-   * The options for the authorization of the operation for a table.
+   * The options for configuring row-level permissions.
    */
-  rowAuth?: {
+   rowPermission?: {
     /**
-     * The name of the column which value will be used to check high risk permissions of a row.
+     * The name of the columns where values are used for permission check.
      */
-    column?: string;
+    column: string | string[];
     /**
-     * Operations that require authorization.
+     * Operations that require permission check.
      */
-    operates?: AuthOperate[];
+    operates: TableOperate[];
   }
 }
 
 export interface TableSchema extends BaseTableSchema {
   options?: TableOptions;
 }
-

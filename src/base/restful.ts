@@ -28,7 +28,6 @@ export default class RESTful extends Server {
     }
     const rowOptsColumn = rowOpts?.column ? (Array.isArray(rowOpts.column) ? rowOpts.column : [rowOpts.column]) : [];
     const permitCols = rowOptsColumn.map((col) => this.getColumnAlias(table, col));
-    // permitCols && rowOpts?.operates?.includes(op) ? {[authCol]: permitValue} : {};
     const permitQuery = (op: TableOperate, permitValue: string | Record<string, any>) => {
       if (!(permitCols && rowOpts?.operates?.includes(op))) {
         return {};

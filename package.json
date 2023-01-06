@@ -1,11 +1,11 @@
 {
   "name": "@easycrud/server",
   "version": "0.1.0",
-  "description": "A koa middleware for constructing CRUD router simply based on koa-router.",
+  "description": "Create RESTful or GraphQL API server based on JSON Table Schema.",
   "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "test": "jest",
+    "build": "tsc -b tsconfig.cjs.json"
   },
   "files": [
     "lib",
@@ -31,14 +31,19 @@
   },
   "homepage": "https://github.com/easycrud/server#readme",
   "devDependencies": {
+    "@jest/globals": "^29.3.1",
     "@types/knex": "^0.15.2",
     "@types/koa": "^2.13.4",
     "@types/koa-router": "^7.4.4",
+    "@types/supertest": "^2.0.12",
     "@typescript-eslint/parser": "^5.48.0",
     "eslint": "^8.18.0",
     "eslint-config-google": "^0.14.0",
     "koa": "^2.13.4",
     "mysql": "^2.18.1",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1",
     "typescript": "^4.9.4"
   },
   "dependencies": {

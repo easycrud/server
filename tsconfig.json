@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./lib",
     "moduleResolution": "node",
     "target": "esnext",
     "module": "commonjs",
@@ -13,5 +11,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-  }
+  },
+  "include": [
+    "src",
+    "test",
+    "jest.config.ts"
+  ]
 }

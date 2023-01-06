@@ -1,0 +1,51 @@
+{
+  "tableName": "users",
+  "columns": [
+    {
+      "name": "id",
+      "type": "int",
+      "length": 11,
+      "primary": true,
+      "autoIncrement": true
+    },
+    {
+      "name": "username",
+      "type": "varchar",
+      "length": 256,
+      "default": "",
+      "comment": "用户名"
+    },
+    {
+      "name": "email",
+      "type": "varchar",
+      "length": 512,
+      "comment": "邮箱"
+    },
+    {
+      "name": "password",
+      "type": "varchar",
+      "length": 512,
+      "comment": "密码"
+    },
+    {
+      "name": "update_time",
+      "alias": "updateTime",
+      "type": "timestamp",
+      "default": "CURRENT_TIMESTAMP",
+      "onUpdate": "CURRENT_TIMESTAMP",
+      "comment": "更新时间"
+    }
+  ],
+  "indexes": {
+    "idx_user": {
+      "columns": [
+        "username",
+        "email"
+      ],
+      "unique": true
+    },
+    "idx_email": {
+      "column": "email"
+    }
+  }
+}

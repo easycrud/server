@@ -39,7 +39,8 @@ export default class KoaRESTful extends RESTful {
         query: ctx.query,
         body: ctx.request.body.data,
       });
-      ctx.reply(res);
+      ctx.response.status = res.code > 0 ? (res.code > 500 ? 500 : res.code) : 200;
+      ctx.body = res;
     };
   }
 

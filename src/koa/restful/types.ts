@@ -6,12 +6,6 @@ import Dao from '../../dao';
 export interface routerConfig {
   [tableName: string]: Partial<{
     /**
-     * If the table does not have a primary key,
-     * set it manually for the show, edit, destory operates which need row search conditions.
-     */
-    primaryKey: string | string[];
-
-    /**
      * If true, the default router opreates will be overwritten by the property 'operates'.
      * Otherwise, the property 'operates' will be deeply merged with the default router opreates.
      */

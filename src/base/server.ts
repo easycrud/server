@@ -90,7 +90,7 @@ export default class Server {
       await db.connect(this.dbConfig, this.dbConfig.database);
     }
 
-    const schemaConfig: {
+    const schemaConfigs: {
       [key: string]: {
         dbClient: Knex;
         dao: Dao;
@@ -121,17 +121,17 @@ export default class Server {
             path += schema.pk.map((col) => `/:${this.getColumnAlias(schema, col)}`).join('');
           }
         }
-        operate.path = path;
+        operate.path = path[0] === '/' ? path : `/${path}`;
       });
 
-      schemaConfig[model] = {
+      schemaConfigs[model] = {
         dbClient,
         dao,
         operates: operates as Record<ResourceOperate, RESTfulOperateConfig>,
         schema,
       };
     });
-    return schemaConfig;
+    return schemaConfigs;
   }
 }
 

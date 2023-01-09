@@ -16,14 +16,14 @@ const db = new DB();
 export default class Server {
   path: string;
   schemas: TypeTableSchema[];
-  dbConfig: DBConfig;
+  dbConfig: DBConfig | DBConfig[];
   getUserPermission: GetUserPermission;
 
   constructor({
-    path, schemas, dbConfig, getUserPermission,
+    path, dbConfig, getUserPermission,
   }: Options) {
     this.path = path || '';
-    this.schemas = schemas || [];
+    this.schemas = [];
     this.dbConfig = dbConfig || {};
     this.getUserPermission = getUserPermission || (() => '');
   }
@@ -71,8 +71,8 @@ export default class Server {
     if (!this.dbConfig) {
       throw new Error('Set at least one database connection config please.');
     }
+    const tableSchema = new TableSchema();
     if (this.path) {
-      const tableSchema = new TableSchema();
       const schemas = tableSchema.fromPath(this.path);
       if (!Array.isArray(schemas)) {
         this.schemas.push(schemas);

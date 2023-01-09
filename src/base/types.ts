@@ -1,16 +1,14 @@
 import {Knex} from 'knex';
 import Dao from '../dao';
-import {TableSchema} from '../types';
 
 export interface DBConfig extends Knex.Config {
-    database?: string;
-  };
+  database?: string;
+};
 
 export type GetUserPermission = () => string | Record<string, any> | (() => Promise<string | Record<string, any>>);
 export interface Options {
   path?: string;
-  schemas?: TableSchema[];
-  dbConfig?: DBConfig;
+  dbConfig?: DBConfig | DBConfig[];
   getUserPermission?: GetUserPermission;
 }
 

@@ -87,8 +87,8 @@ export default class RESTful extends Server {
       all: {
         path: `all_${table.alias || table.tableName}`,
         method: 'get',
-        handler: async ({dao, query}) => {
-          const permitValue = await this.getUserPermission();
+        handler: async ({dao, query, meta}) => {
+          const permitValue = await this.getUserPermission(meta);
           let res = await dao.all(Object.assign(permitQuery('read', permitValue), query));
           res = addPermit(res, permitValue);
           return this.response(res);
@@ -96,8 +96,8 @@ export default class RESTful extends Server {
       },
       paginate: {
         method: 'get',
-        handler: async ({dao, query}) => {
-          const permitValue = await this.getUserPermission();
+        handler: async ({dao, query, meta}) => {
+          const permitValue = await this.getUserPermission(meta);
           let res = await dao.paginate(Object.assign(permitQuery('read', permitValue), query));
           res = addPermit(res, permitValue);
           return this.response(res);
@@ -105,8 +105,8 @@ export default class RESTful extends Server {
       },
       show: {
         method: 'get',
-        handler: async ({dao, params}) => {
-          const permitValue = await this.getUserPermission();
+        handler: async ({dao, params, meta}) => {
+          const permitValue = await this.getUserPermission(meta);
           const res = await dao.getByPk(pkQuery(params), permitQuery('read', permitValue));
           return this.response(res);
         },
@@ -120,16 +120,16 @@ export default class RESTful extends Server {
       },
       edit: {
         method: 'put',
-        handler: async ({dao, params, body}) => {
-          const permitValue = await this.getUserPermission();
+        handler: async ({dao, params, body, meta}) => {
+          const permitValue = await this.getUserPermission(meta);
           const res = await dao.updateByPk(pkQuery(params), permitQuery('read', permitValue), body);
           return this.response(res);
         },
       },
       destory: {
         method: 'delete',
-        handler: async ({dao, params}) => {
-          const permitValue = await this.getUserPermission();
+        handler: async ({dao, params, meta}) => {
+          const permitValue = await this.getUserPermission(meta);
           const res = await dao.delByPk(pkQuery(params), permitQuery('read', permitValue));
           return this.response(res);
         },

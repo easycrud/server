@@ -12,9 +12,11 @@ export default class KoaRESTful extends RESTful {
   router: Router;
 
   constructor({
-    path, schemas, dbConfig, routerConfig, getUserPermission, koaBodyOptions,
+    path, dbConfig, routerConfig, getUserPermission, koaBodyOptions,
   }: KoaOptions, router: Router) {
-    super({path, schemas, dbConfig, getUserPermission});
+    const koaGetUserPermission = getUserPermission ?
+      async (ctx: RouterContext) => await getUserPermission(ctx) : undefined;
+    super({path, dbConfig, getUserPermission: koaGetUserPermission});
     this.routerConfig = routerConfig || {};
     this.router = router || new Router();
 
@@ -38,6 +40,7 @@ export default class KoaRESTful extends RESTful {
         params: ctx.params,
         query: ctx.query,
         body: ctx.request.body.data,
+        meta: ctx,
       });
       ctx.response.status = res.code > 0 ? (res.code > 500 ? 500 : res.code) : 200;
       ctx.body = res;

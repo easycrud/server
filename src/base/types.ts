@@ -5,7 +5,8 @@ export interface DBConfig extends Knex.Config {
   database?: string;
 };
 
-export type GetUserPermission = () => string | Record<string, any> | (() => Promise<string | Record<string, any>>);
+export type GetUserPermission = (meta?: any) => string | Record<string, any>
+  | ((meta?: any) => Promise<string | Record<string, any>>);
 export interface Options {
   path?: string;
   dbConfig?: DBConfig | DBConfig[];
@@ -22,7 +23,8 @@ export type RESTfulHandler = (params: {
   dao: Dao,
   params: Record<string, any>,
   query: Record<string, any>,
-  body: Record<string, any>
+  body: Record<string, any>,
+  meta?: any
 }) => Promise<Response>;
 export interface RESTfulOperateConfig {
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';

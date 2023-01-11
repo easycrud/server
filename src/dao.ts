@@ -26,17 +26,40 @@ export default class Dao {
     }, {} as Record<string, any>);
   }
 
-  buildCond(query: Knex.QueryBuilder, cond: Record<string, any>) {
-    Object.entries(cond).forEach(([key, val]) => {
+  buildWhereClause(query: Knex.QueryBuilder, conditions: Record<string, any>) {
+    const opMap: { [op: string]: string } = {
+      'eq': '=',
+      'ne': '!=',
+      'gt': '>',
+      'gte': '>=',
+      'lt': '<',
+      'lte': '<=',
+    };
+    Object.entries(conditions).forEach(([key, val]) => {
       if (!val) {
         return;
       }
-      const values = val.split(',');
-      if (values[1]) {
-        query = query.where(key, '>=', values[0]).where('key', '<=', values[1]);
+      let [field, op] = key.split(':');
+      if (!op) {
+        query = query.where(field, val);
         return;
       }
-      query = query.where(key, 'LIKE', `%${val}%`);
+      op = op.toLowerCase();
+      if (op in opMap) {
+        query = query.where(field, opMap[op], val);
+        return;
+      }
+      switch (op) {
+      case 'in':
+        query = query.whereIn(field, val.split(','));
+        break;
+      case 'like':
+        query = query.where(field, 'LIKE', `%${val}%`);
+        break;
+      case 'btw':
+        query = query.whereBetween(field, val.split(','));
+        break;
+      }
     });
 
     return query;
@@ -45,7 +68,7 @@ export default class Dao {
   async all(params: Record<string, any>) {
     try {
       let query = this.db.select(this.alias);
-      query = this.buildCond(query, this.transform(params));
+      query = this.buildWhereClause(query, this.transform(params));
       return await query.from(this.table);
     } catch (err) {
       console.error(err);
@@ -59,7 +82,7 @@ export default class Dao {
       const currentPage = page ? parseInt(page, 10) : 1;
       const perPage = pageSize ? parseInt(pageSize, 10) : 20;
       let query = this.db.select(this.alias);
-      query = this.buildCond(query, this.transform(params));
+      query = this.buildWhereClause(query, this.transform(params));
       if (orderBy) {
         const [key, order] = orderBy.split(',');
         query = query.orderBy(key, order || 'DESC');
@@ -71,10 +94,10 @@ export default class Dao {
     }
   }
 
-  async getByPk(pk: Record<string, any>, auth: Record<string, any>) {
+  async getByPk(pk: Record<string, any>, permission: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform({...pk, ...auth}))
+        .where(this.transform({...pk, ...permission}))
         .select(this.alias)
         .from(this.table);
 
@@ -85,10 +108,10 @@ export default class Dao {
     }
   }
 
-  async delByPk(pk: Record<string, any>, auth: Record<string, any>) {
+  async delByPk(pk: Record<string, any>, permission: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform({...pk, ...auth}))
+        .where(this.transform({...pk, ...permission}))
         .from(this.table)
         .del();
 
@@ -112,11 +135,11 @@ export default class Dao {
 
   async updateByPk(
     pk: Record<string, any>,
-    auth: Record<string, any>,
+    permission: Record<string, any>,
     data: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform({...pk, ...auth}))
+        .where(this.transform({...pk, ...permission}))
         .from(this.table)
         .update(this.transform(data));
 

@@ -27,45 +27,63 @@ export default class RESTful extends Server {
         `table ${table.tableName} requires row auth check, but getUserPermission function is not defined.`);
     }
     const rowOptsColumn = rowOpts?.column ? (Array.isArray(rowOpts.column) ? rowOpts.column : [rowOpts.column]) : [];
-    const permitCols = rowOptsColumn.map((col) => this.getColumnAlias(table, col));
-    const permitQuery = (op: TableOperate, permitValue: string | Record<string, any>) => {
-      if (!(permitCols && rowOpts?.operates?.includes(op))) {
+    const permissionCols = rowOptsColumn.map((col) => this.getColumnAlias(table, col));
+
+    /*
+     * permissionQuery
+     * Build the query object to check the permission.
+     * It is used for where clause in sql query while executing read, update and delete operations.
+     */
+    const permissionQuery = (op: TableOperate, permissionValue: string | Record<string, any>) => {
+      if (!(permissionCols && rowOpts?.operates?.includes(op))) {
         return {};
       }
-      if (typeof permitValue === 'string') {
-        if (permitCols.length > 1) {
+      if (typeof permissionValue === 'string') {
+        if (permissionCols.length > 1) {
           throw new Error(
             `table ${table.tableName} requires multi-column values to check permissions, \
             but getUserPermission function returns a string. Please return an object instead.`);
         }
-        return {[permitCols[0]]: permitValue};
+        return {[permissionCols[0]]: permissionValue};
       }
       const query: Record<string, any> = {};
-      permitCols.forEach((col) => {
-        query[col] = permitValue[col];
+      permissionCols.forEach((col) => {
+        query[col] = permissionValue[col];
       });
       return query;
     };
-    const addPermit = permitCols ?
-      (res: any | { err: unknown }, permitValue: string | Record<string, any>) => {
+
+    /*
+     * appendPermission
+     * Append permission information to the response data.
+     * The information is helpful for frontend to decide whether to show the update and delete buttons.
+     */
+    const appendPermission = permissionCols ?
+      (res: any | { err: unknown }, permissionValue: string | Record<string, any>) => {
         if (!(Array.isArray(res) || Array.isArray(res.data))) {
           return res;
         }
         const data = Array.isArray(res) ? res : res.data;
         for (const row of data) {
-          if (typeof permitValue === 'string' && row[permitCols[0]] === permitValue) {
-            row.permit = true;
-          } else if (typeof permitValue === 'object') {
-            row.permit = permitCols.every((col) => row[col] === permitValue[col]);
-          } else {
-            row.permit = false;
+          row.forbid = {
+            update: false,
+            delete: false,
+          };
+          if ((typeof permissionValue === 'string' && row[permissionCols[0]] !== permissionValue) ||
+            typeof permissionValue === 'object' && permissionCols.some((col) => row[col] !== permissionValue[col])) {
+            if (rowOpts?.operates?.includes('update')) {
+              row.forbid.update = true;
+            }
+            if (rowOpts?.operates?.includes('delete')) {
+              row.forbid.delete = true;
+            }
           }
         }
         return res;
       } :
       (res: any) => res;
 
-    return {permitQuery, addPermit};
+    return {permissionQuery, appendPermission};
   }
 
   buildPkQuery(table: TypeTableSchema) {
@@ -81,33 +99,33 @@ export default class RESTful extends Server {
   }
 
   buildOperates(table: TypeTableSchema): Record<ResourceOperate, Partial<RESTfulOperateConfig>> {
-    const {permitQuery, addPermit} = this.buildRowPermission(table);
+    const {permissionQuery, appendPermission} = this.buildRowPermission(table);
     const pkQuery = this.buildPkQuery(table);
     return {
       all: {
         path: `all_${table.alias || table.tableName}`,
         method: 'get',
         handler: async ({dao, query, meta}) => {
-          const permitValue = await this.getUserPermission(meta);
-          let res = await dao.all(Object.assign(permitQuery('read', permitValue), query));
-          res = addPermit(res, permitValue);
+          const permissionValue = await this.getUserPermission(meta);
+          let res = await dao.all(Object.assign(permissionQuery('read', permissionValue), query));
+          res = appendPermission(res, permissionValue);
           return this.response(res);
         },
       },
       paginate: {
         method: 'get',
         handler: async ({dao, query, meta}) => {
-          const permitValue = await this.getUserPermission(meta);
-          let res = await dao.paginate(Object.assign(permitQuery('read', permitValue), query));
-          res = addPermit(res, permitValue);
+          const permissionValue = await this.getUserPermission(meta);
+          let res = await dao.paginate(Object.assign(permissionQuery('read', permissionValue), query));
+          res = appendPermission(res, permissionValue);
           return this.response(res);
         },
       },
       show: {
         method: 'get',
         handler: async ({dao, params, meta}) => {
-          const permitValue = await this.getUserPermission(meta);
-          const res = await dao.getByPk(pkQuery(params), permitQuery('read', permitValue));
+          const permissionValue = await this.getUserPermission(meta);
+          const res = await dao.getByPk(pkQuery(params), permissionQuery('read', permissionValue));
           return this.response(res);
         },
       },
@@ -121,16 +139,16 @@ export default class RESTful extends Server {
       edit: {
         method: 'put',
         handler: async ({dao, params, body, meta}) => {
-          const permitValue = await this.getUserPermission(meta);
-          const res = await dao.updateByPk(pkQuery(params), permitQuery('read', permitValue), body);
+          const permissionValue = await this.getUserPermission(meta);
+          const res = await dao.updateByPk(pkQuery(params), permissionQuery('update', permissionValue), body);
           return this.response(res);
         },
       },
       destory: {
         method: 'delete',
         handler: async ({dao, params, meta}) => {
-          const permitValue = await this.getUserPermission(meta);
-          const res = await dao.delByPk(pkQuery(params), permitQuery('read', permitValue));
+          const permissionValue = await this.getUserPermission(meta);
+          const res = await dao.delByPk(pkQuery(params), permissionQuery('delete', permissionValue));
           return this.response(res);
         },
       },

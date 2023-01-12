@@ -57,7 +57,7 @@ export default class Server {
   }
 
   getTableAlias(table: TypeTableSchema) {
-    return Object.fromEntries(table.columns.map((col) => {
+    return Object.fromEntries(table.columns.filter((col) => !col.hide).map((col) => {
       const alias = col.alias || this.getColumnAlias(table, col.name);
       return [alias, col.name];
     }));

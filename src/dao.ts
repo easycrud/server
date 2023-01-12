@@ -94,24 +94,24 @@ export default class Dao {
     }
   }
 
-  async getByPk(pk: Record<string, any>, permission: Record<string, any>) {
+  async getByPk(pk: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform({...pk, ...permission}))
+        .where(this.transform(pk))
         .select(this.alias)
         .from(this.table);
 
-      return result.length > 0 ? result[0] : {err: 'not found'};
+      return result.length > 0 ? result[0] : {err: {code: 404, msg: 'Not Found'}};
     } catch (err) {
       console.log(err);
       return {err};
     }
   }
 
-  async delByPk(pk: Record<string, any>, permission: Record<string, any>) {
+  async delByPk(pk: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform({...pk, ...permission}))
+        .where(this.transform(pk))
         .from(this.table)
         .del();
 
@@ -135,11 +135,10 @@ export default class Dao {
 
   async updateByPk(
     pk: Record<string, any>,
-    permission: Record<string, any>,
     data: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform({...pk, ...permission}))
+        .where(this.transform(pk))
         .from(this.table)
         .update(this.transform(data));
 

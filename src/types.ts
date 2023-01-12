@@ -17,6 +17,10 @@ export interface TableOptions extends BaseTableOptions {
      * Operations that require permission check.
      */
     operates: TableOperate[];
+    /**
+     * The method of the permission check.
+     */
+    method?: 'equal' | 'include';
   }
 }
 

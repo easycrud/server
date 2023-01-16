@@ -50,7 +50,6 @@ export default class KoaRESTful extends RESTful {
   async create(app: Application) {
     const schemaConfigs = await this.createServer();
     Object.entries(schemaConfigs).forEach(([model, config]) => {
-      app.context[`${model}DB`] = config.dbClient;
       app.context[`${model}Dao`] = config.dao;
 
       const defaultOperates: {[op:string]: OperateConfig} = {};

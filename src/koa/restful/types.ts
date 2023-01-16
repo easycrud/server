@@ -28,5 +28,6 @@ export interface KoaOptions extends Options {
 declare module 'koa' {
   export interface BaseContext {
     reply: (data?: Object | Array<any> | string) => void;
+    [dao: string]: Dao;
   }
 }

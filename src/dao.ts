@@ -94,10 +94,10 @@ export default class Dao {
     }
   }
 
-  async getByPk(pk: Record<string, any>) {
+  async getByFields(fields: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform(pk))
+        .where(this.transform(fields))
         .select(this.alias)
         .from(this.table);
 
@@ -108,10 +108,10 @@ export default class Dao {
     }
   }
 
-  async delByPk(pk: Record<string, any>) {
+  async delByFields(fields: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform(pk))
+        .where(this.transform(fields))
         .from(this.table)
         .del();
 
@@ -133,12 +133,12 @@ export default class Dao {
     }
   }
 
-  async updateByPk(
-    pk: Record<string, any>,
+  async updateByFields(
+    fields: Record<string, any>,
     data: Record<string, any>) {
     try {
       const result = await this.db
-        .where(this.transform(pk))
+        .where(this.transform(fields))
         .from(this.table)
         .update(this.transform(data));
 

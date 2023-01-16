@@ -92,7 +92,6 @@ export default class Server {
 
     const schemaConfigs: {
       [key: string]: {
-        dbClient: Knex;
         dao: Dao;
         operates: Record<ResourceOperate, RESTfulOperateConfig>
         schema: TypeTableSchema;
@@ -125,7 +124,6 @@ export default class Server {
       });
 
       schemaConfigs[model] = {
-        dbClient,
         dao,
         operates: operates as Record<ResourceOperate, RESTfulOperateConfig>,
         schema,

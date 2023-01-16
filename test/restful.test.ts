@@ -20,10 +20,10 @@ jest.mock('../src/dao', () => {
         data: [],
         paginate: {},
       }),
-      getByPk: jest.fn().mockReturnValue({}),
-      delByPk: jest.fn().mockReturnValue({}),
+      getByFields: jest.fn().mockReturnValue({}),
+      delByFields: jest.fn().mockReturnValue({}),
       create: jest.fn().mockReturnValue({}),
-      updateByPk: jest.fn().mockReturnValue({}),
+      updateByFields: jest.fn().mockReturnValue({}),
     };
   });
 });

@@ -48,7 +48,7 @@ export default class RESTful extends Server {
      */
     const getByPkWithPermission = async (dao: Dao, pk: Record<string, any>,
       op: TableOperate, permissionValue: string | Record<string, any>) => {
-      const res = await dao.getByPk(pk);
+      const res = await dao.getByFields(pk);
       if (!(permissionCols && rowOpts?.operates?.includes(op)) || res.err) {
         return res;
       }
@@ -154,7 +154,7 @@ export default class RESTful extends Server {
           if (res.err) {
             return this.response(res);
           }
-          res = await dao.updateByPk(pk, body);
+          res = await dao.updateByFields(pk, body);
           return this.response(res);
         },
       },
@@ -167,7 +167,7 @@ export default class RESTful extends Server {
           if (res.err) {
             return this.response(res);
           }
-          res = await dao.delByPk(pk);
+          res = await dao.delByFields(pk);
           return this.response(res);
         },
       },

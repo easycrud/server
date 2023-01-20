@@ -95,12 +95,21 @@ export default class RESTful extends Server {
     return {getByPkWithPermission, processDataByPermission};
   }
 
+  isNumeric(str: string) {
+    if (typeof str !== 'string') return false;
+    return !isNaN(+str);
+  }
+
   buildPkQuery(table: TypeTableSchema) {
     const pk = table.pk.map((col) => this.getColumnAlias(table, col));
     const pkQuery = (params: Record<string, any>) => {
       const query: Record<string, any> = {};
       pk.forEach((col) => {
-        query[col] = params[col];
+        let val = params[col];
+        if (this.isNumeric(val)) {
+          val = +val;
+        }
+        query[col] = val;
       });
       return query;
     };
